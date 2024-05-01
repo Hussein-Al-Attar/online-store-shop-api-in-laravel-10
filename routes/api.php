@@ -11,11 +11,13 @@ use App\Http\Controllers\api\OrderItemController;
 use App\Http\Controllers\api\ProductImageController;
 use App\Http\Controllers\api\UserController;
 use App\Http\Controllers\api\AuthController;
+Route::middleware('auth:sanctum')->get('/user', [UserController::class, 'getUserFromToken']);
 
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
 Route::controller(AuthController::class)->group(function () {
     Route::post('login', 'login');
     Route::post('register', 'register');
@@ -71,4 +73,6 @@ Route::get('/users/{user}', [UserController::class, 'show']);
 Route::put('/users/{user}', [UserController::class, 'update']);
 Route::delete('/users/{user}', [UserController::class, 'destroy']);
 
-
+Route::fallback(function () {
+    return response()->json(['error' => 'Not found'], 404);
+});
