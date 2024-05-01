@@ -1,6 +1,7 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\api;
+use Illuminate\Routing\Controller;
 
 use Illuminate\Http\Request;
 use App\Models\OrderItem;
