@@ -1,10 +1,13 @@
 <?php
 
 namespace App\Http\Controllers\api;
+
 use Illuminate\Routing\Controller;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class ProductController extends Controller
 {
@@ -15,9 +18,19 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::all();
-        return response()->json($products);
+        try {
+            $products = Product::all();
+            return response()->json([
+                'message' => 'Products retrieved successfully',
+                'data' => $products
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve products:' . $e->getMessage());
+            // التعامل مع الأخطاء بشكل أفضل
+            return response()->json(['error' => 'Failed to retrieve products'], 500);
+        }
     }
+
 
     /**
      * Store a newly created product in storage.
@@ -27,20 +40,38 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string',
-            'price' => 'required|numeric|min:0',
-            // Add more validation rules as needed
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string',
+                'price' => 'required|numeric|min:0',
+                'description' => 'required|string',
+                'category_id' => 'required|integer',
+            ]);
 
-        $product = Product::create([
-            'name' => $request->name,
-            'price' => $request->price,
-            // Add more data for product creation as needed
-        ]);
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 400);
+            }
+            $product = Product::create([
+                'name' => $request->name,
+                'price' => $request->price,
+                'description' => $request->description,
+                'category_id' => $request->category_id,
+            ]);
 
-        return response()->json($product, 201);
+            return response()->json([
+                'message' => 'Product created successfully',
+                'data' => $product,
+                'url' => route('products.show', $product->id) // Assuming there's a route to show product details
+            ], 201);
+        } catch (\Exception $e) {
+            // Log the exception for debugging
+            Log::error('Failed to create product: ' . $e->getMessage());
+
+            // Return a generic error message to the user
+            return response()->json(['error' => 'Failed to create product'], 500);
+        }
     }
+
 
     /**
      * Display the specified product.
@@ -50,8 +81,18 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        return response()->json($product);
+        try {
+            return response()->json([
+                'message' => 'Product retrieved successfully',
+                'data' => $product
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve products:' . $e->getMessage());
+            // التعامل مع الأخطاء بشكل أفضل
+            return response()->json(['error' => 'Failed to retrieve product'], 500);
+        }
     }
+
 
     /**
      * Update the specified product in storage.
@@ -61,21 +102,33 @@ class ProductController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Product $product)
-    {
-        $request->validate([
-            'name' => 'string',
-            'price' => 'numeric|min:0',
-            // Add more validation rules as needed
+{
+    try {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string',
+            'price' => 'required|numeric|min:0',
+            'description' => 'required|string',
+            'category_id' => 'required|integer',
         ]);
 
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 400);
+        }
         $product->update([
-            'name' => $request->name ?? $product->name,
-            'price' => $request->price ?? $product->price,
-            // Add more data for product update as needed
+            'name' => $request->name,
+            'price' => $request->price,
+            'description' => $request->description,
+            'category_id' => $request->category_id,
         ]);
 
         return response()->json($product, 200);
+    } catch (\Exception $e) {
+        // Handle any exceptions
+        Log::error('Failed to update product: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to update product'], 500);
     }
+}
+
 
     /**
      * Remove the specified product from storage.
@@ -85,7 +138,14 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
-        $product->delete();
-        return response()->json(null, 204);
+        try {
+            $product->delete();
+            return response()->json(['message' => 'Product deleted successfully'], 202);
+        } catch (\Exception $e) {
+            // Handle any exceptions
+            Log::error('Failed to delete product' . $e->getMessage());
+            return response()->json(['error' => 'Failed to delete product'], 500);
+        }
     }
+
 }
