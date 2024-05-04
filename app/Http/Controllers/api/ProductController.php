@@ -21,13 +21,14 @@ class ProductController extends Controller
         try {
             $products = Product::all();
             return response()->json([
+                'status' => true,
                 'message' => 'Products retrieved successfully',
                 'data' => $products
             ], 200);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve products:' . $e->getMessage());
             // التعامل مع الأخطاء بشكل أفضل
-            return response()->json(['error' => 'Failed to retrieve products'], 500);
+            return response()->json(['status' => 'error', 'message' => 'Failed to retrieve products',], 500);
         }
     }
 
@@ -49,7 +50,7 @@ class ProductController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 400);
+                return response()->json(['status' => false,'errors' => $validator->errors()], 400);
             }
             $product = Product::create([
                 'name' => $request->name,
@@ -59,6 +60,7 @@ class ProductController extends Controller
             ]);
 
             return response()->json([
+                'status' => true,
                 'message' => 'Product created successfully',
                 'data' => $product,
                 'url' => route('products.show', $product->id) // Assuming there's a route to show product details
@@ -68,7 +70,7 @@ class ProductController extends Controller
             Log::error('Failed to create product: ' . $e->getMessage());
 
             // Return a generic error message to the user
-            return response()->json(['error' => 'Failed to create product'], 500);
+            return response()->json(['status' => false,'message' => 'Unauthorized'], 500);
         }
     }
 
@@ -83,13 +85,14 @@ class ProductController extends Controller
     {
         try {
             return response()->json([
+                'status' => true,
                 'message' => 'Product retrieved successfully',
                 'data' => $product
             ], 200);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve products:' . $e->getMessage());
             // التعامل مع الأخطاء بشكل أفضل
-            return response()->json(['error' => 'Failed to retrieve product'], 500);
+            return response()->json(['status' => false,'message' => 'Failed to retrieve product'], 500);
         }
     }
 
@@ -102,32 +105,32 @@ class ProductController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Product $product)
-{
-    try {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string',
-            'price' => 'required|numeric|min:0',
-            'description' => 'required|string',
-            'category_id' => 'required|integer',
-        ]);
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string',
+                'price' => 'required|numeric|min:0',
+                'description' => 'required|string',
+                'category_id' => 'required|integer',
+            ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 400);
+            if ($validator->fails()) {
+                return response()->json(['status' => true ,'errors' => $validator->errors()], 400);
+            }
+            $product->update([
+                'name' => $request->name,
+                'price' => $request->price,
+                'description' => $request->description,
+                'category_id' => $request->category_id,
+            ]);
+
+            return response()->json($product, 200);
+        } catch (\Exception $e) {
+            // Handle any exceptions
+            Log::error('Failed to update product: ' . $e->getMessage());
+            return response()->json(['status' => false ,'message' => 'Failed to update product'], 500);
         }
-        $product->update([
-            'name' => $request->name,
-            'price' => $request->price,
-            'description' => $request->description,
-            'category_id' => $request->category_id,
-        ]);
-
-        return response()->json($product, 200);
-    } catch (\Exception $e) {
-        // Handle any exceptions
-        Log::error('Failed to update product: ' . $e->getMessage());
-        return response()->json(['error' => 'Failed to update product'], 500);
     }
-}
 
 
     /**
@@ -140,11 +143,11 @@ class ProductController extends Controller
     {
         try {
             $product->delete();
-            return response()->json(['message' => 'Product deleted successfully'], 202);
+            return response()->json(['status' => true ,'message' => 'Product deleted successfully'], 202);
         } catch (\Exception $e) {
             // Handle any exceptions
             Log::error('Failed to delete product' . $e->getMessage());
-            return response()->json(['error' => 'Failed to delete product'], 500);
+            return response()->json(['status' => false ,'message' => 'Failed to delete product'], 500);
         }
     }
 

@@ -11,24 +11,44 @@ use Illuminate\Support\Facades\Log;
 
 class AddressController extends Controller
 {
+
+    public function __construct()
+    {
+        $this->middleware('auth:api');
+    }
     public function index()
     {
         try {
             $addresses = Address::all();
-            return response()->json($addresses);
+            return response()->json([
+                'status' => true,
+                'message' => 'Addresses fetched successfully',
+                'data' => $addresses
+            ]);
         } catch (\Exception $e) {
             Log::error('Failed to fetch addresses: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to fetch addresses'], 500);
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch addresses'
+            ], 500);
         }
     }
+
 
     public function show(Address $address)
     {
         try {
-            return response()->json($address);
+            return response()->json([
+                'status' => true,
+                'message' => 'Address fetched successfully',
+                'data' => $address
+            ]);
         } catch (\Exception $e) {
             Log::error('Failed to fetch address: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to fetch address'], 500);
+            return response()->json([
+                'status' => false,
+                'message' => 'Failed to fetch address'
+            ], 500);
         }
     }
 
@@ -45,7 +65,7 @@ class AddressController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 400);
+                return response()->json(['status' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 400);
             }
 
             // Assuming user_id is available from authenticated user
@@ -61,12 +81,13 @@ class AddressController extends Controller
                 'postal_code' => $request->postal_code,
             ]);
 
-            return response()->json(['message' => 'Address created successfully', 'data' => $address], 201);
+            return response()->json(['status' => true, 'message' => 'Address created successfully', 'data' => $address], 201);
         } catch (\Exception $e) {
             Log::error('Failed to create address: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to create address'], 500);
+            return response()->json(['status' => false, 'message' => 'Failed to create address'], 500);
         }
     }
+
 
 
     public function update(Request $request, Address $address)
@@ -83,7 +104,7 @@ class AddressController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 400);
+                return response()->json(['status' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 400);
             }
 
             // Update only the provided fields
@@ -96,10 +117,10 @@ class AddressController extends Controller
                 'postal_code',
             ]));
 
-            return response()->json(['message' => 'Address updated successfully', 'data' => $address], 200);
+            return response()->json(['status' => true, 'message' => 'Address updated successfully', 'data' => $address], 200);
         } catch (\Exception $e) {
             Log::error('Failed to update address: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to update address'], 500);
+            return response()->json(['status' => false, 'message' => 'Failed to update address'], 500);
         }
     }
 
@@ -108,10 +129,11 @@ class AddressController extends Controller
     {
         try {
             $address->delete();
-            return response()->json(['message' => 'Address deleted successfully'], 204);
+            return response()->json(['status' => true, 'message' => 'Address deleted successfully'], 200);
         } catch (\Exception $e) {
             Log::error('Failed to delete address: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to delete address'], 500);
+            return response()->json(['status' => false, 'message' => 'Failed to delete address'], 500);
         }
     }
+
 }

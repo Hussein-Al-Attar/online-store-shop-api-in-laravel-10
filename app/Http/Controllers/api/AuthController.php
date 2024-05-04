@@ -30,7 +30,7 @@ class AuthController extends Controller
             // Attempt to authenticate the user
             if (!$token = Auth::attempt($credentials)) {
                 // Return unauthorized response if authentication fails
-                return response()->json(['error' => 'Unauthorized'], 401);
+                return response()->json(['status' => false, 'message' => 'User login successfully',], 401);
             }
 
             // Authentication successful, retrieve the authenticated user
@@ -39,6 +39,8 @@ class AuthController extends Controller
 
             // Return response with user details and token
             return response()->json([
+                'status' => true,
+                'message' => 'User login fails',
                 'user' => $user,
                 'authorization' => [
                     'token' => $token,
@@ -47,10 +49,10 @@ class AuthController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            Log::error('User registration failed:' . $e->getMessage());
+            Log::error('User login failed:' . $e->getMessage());
 
             // Handle any exceptions
-            return response()->json(['error' => 'User registration failed' . $e], 500);
+            return response()->json(['status' => false, 'message' => 'Unauthorized'], 500);
         }
     }
 
@@ -68,7 +70,7 @@ class AuthController extends Controller
 
             // Check if validation fails
             if ($validator->fails()) {
-                return response()->json(['error' => $validator->errors()], 422);
+                return response()->json(['status' => false ,'message' => $validator->errors()], 422);
             }
 
             // Create a new user
@@ -83,6 +85,7 @@ class AuthController extends Controller
 
             // Return response with user details and token
             return response()->json([
+                'status' => true,
                 'message' => 'User created successfully',
                 'user' => $user,
                 'authorization' => [
@@ -95,7 +98,7 @@ class AuthController extends Controller
             // Handle any exceptions
             Log::error('User registration failed:' . $e->getMessage());
 
-            return response()->json(['error' => 'User registration failed' . $e], 500);
+            return response()->json(['status' => true, 'message' => 'Unauthorized'], 500);
         }
     }
 
@@ -105,13 +108,14 @@ class AuthController extends Controller
         try {
             Auth::logout();
             return response()->json([
+                'status' => true,
                 'message' => 'Successfully logged out',
             ]);
         } catch (\Exception $e) {
             // Handle any exceptions
-            Log::error('User registration failed:' . $e->getMessage());
+            Log::error('User logout failed:' . $e->getMessage());
 
-            return response()->json(['error' => 'User registration failed' . $e], 500);
+            return response()->json(['status' => false, 'message' => 'error in logged out'], 500);
         }
     }
 
@@ -119,6 +123,8 @@ class AuthController extends Controller
     {
         try {
             return response()->json([
+                'status' => true,
+                'message' => 'Successfully refresh',
                 'user' => Auth::user(),
                 'authorisation' => [
                     'token' => Auth::refresh(),
@@ -127,32 +133,13 @@ class AuthController extends Controller
             ]);
         } catch (\Exception $e) {
             // Handle any exceptions
-            Log::error('User registration failed:' . $e->getMessage());
+            Log::error('User refresh failed:' . $e->getMessage());
 
-            return response()->json(['error' => 'User registration failed' . $e], 500);
+            return response()->json([
+                'status' => false,
+                'message' => 'User refresh failed',
+            ], 500);
         }
     }
-    public function getUserFromToken(Request $request)
-    {
-        try {
-            // Attempt to authenticate the request using the token
-            $user = Auth::user();
 
-            // Check if user is authenticated
-            if ($user) {
-                // User is authenticated, return user details
-                return response()->json([
-                    'user' => $user,
-                ]);
-            } else {
-                // Token is not valid or user is not authenticated
-                return response()->json(['error' => 'Unauthorized'], 401);
-            }
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-
-            // Handle any exceptions
-            return response()->json(['error' => 'Something went wrong'], 500);
-        }
-    }
 }
